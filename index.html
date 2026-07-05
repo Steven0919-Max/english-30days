@@ -3,178 +3,132 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>轻量英语App</title>
+<title>轻量英语V3</title>
 
 <style>
-body{font-family:Arial;margin:0;background:#f4f6f8}
-header{padding:15px;text-align:center;background:#111;color:#fff}
-.tab{display:flex;justify-content:space-around;background:#fff;padding:10px}
-.tab button{border:none;background:none;font-size:14px}
-.page{display:none;padding:15px}
-.active{display:block}
-.card{background:#fff;padding:12px;margin:10px 0;border-radius:10px}
-.word{padding:5px 0;cursor:pointer;color:#1a73e8}
-.small{font-size:12px;color:#666}
+body { font-family: Arial; background:#f5f5f5; margin:0; }
+h2 { text-align:center; }
+.card { background:#fff; margin:12px; padding:15px; border-radius:12px; }
+.word { padding:6px 0; cursor:pointer; }
+.small { color:#666; font-size:12px; text-align:center; }
+button { padding:8px 12px; margin:5px; }
 </style>
 </head>
 
 <body>
 
-<header>
-<h2>📱 轻量英语App</h2>
-<div class="small">Lite English Learning System</div>
-</header>
+<h2>📘 AI英语学习V3</h2>
 
-<div class="tab">
-<button onclick="show('home')">🏠 首页</button>
-<button onclick="show('study')">📚 学习</button>
-<button onclick="show('review')">🧠 复习</button>
-<button onclick="show('me')">📊 我的</button>
-</div>
+<div class="small" id="date"></div>
 
-<!-- 首页 -->
-<div id="home" class="page active">
 <div class="card">
-<h3>📅 Day <span id="day"></span></h3>
-<div id="date"></div>
+<h3>📅 Day <span id="day">1</span></h3>
 </div>
 
 <div class="card">
-<h3>🔥 今日状态</h3>
-<div id="status"></div>
-</div>
-</div>
-
-<!-- 学习 -->
-<div id="study" class="page">
-<div class="card">
-<h3>📚 单词学习</h3>
+<h3>🔊 单词（点击发音）</h3>
 <div id="words"></div>
 </div>
 
 <div class="card">
-<h3>📝 例句</h3>
+<h3>🧠 句子</h3>
 <div id="sentences"></div>
 </div>
-</div>
-
-<!-- 复习 -->
-<div id="review" class="page">
-<div class="card">
-<h3>🧠 复习区</h3>
-<div id="reviewBox"></div>
-</div>
-</div>
-
-<!-- 我的 -->
-<div id="me" class="page">
-<div class="card">
-<h3>📊 学习数据</h3>
-<div id="stats"></div>
-</div>
 
 <div class="card">
-<h3>📌 打卡</h3>
+<h3>📊 打卡</h3>
 <button onclick="checkin()">今日打卡</button>
-<div id="check"></div>
-</div>
+<p id="streak"></p>
 </div>
 
 <script>
 
-// ================= 数据 =================
-const words = [
-{en:"want",cn:"想要"},
-{en:"water",cn:"水"},
-{en:"food",cn:"食物"},
-{en:"go",cn:"去"},
-{en:"like",cn:"喜欢"}
+// ===== 基础数据 =====
+let words = [
+"want = 想要",
+"water = 水",
+"food = 食物",
+"go = 去",
+"like = 喜欢"
 ];
 
-const sentences = [
+let sentences = [
 "I want water",
 "I like food",
-"Can I go home?"
+"Can I go?"
 ];
 
-// ================= 日期 =================
-let start = localStorage.getItem("start") || new Date().toISOString();
-localStorage.setItem("start", start);
+// ===== 日期 =====
+document.getElementById("date").innerText = new Date().toDateString();
 
-let now = new Date();
-let day = Math.floor((now - new Date(start))/86400000)+1;
-
+// ===== Day系统 =====
+let start = localStorage.getItem("startDay");
+if(!start){
+ start = Date.now();
+ localStorage.setItem("startDay", start);
+}
+let day = Math.floor((Date.now() - start)/(1000*60*60*24)) + 1;
 document.getElementById("day").innerText = day;
-document.getElementById("date").innerText = now.toDateString();
 
-// ================= 学习区 =================
-let box = document.getElementById("words");
+// ===== 单词渲染 =====
+function renderWords(){
+ let box = document.getElementById("words");
+ box.innerHTML = "";
+ words.forEach(w=>{
+   let div = document.createElement("div");
+   div.className = "word";
+   div.innerText = w;
 
-words.forEach(w=>{
-let div=document.createElement("div");
-div.className="word";
-div.innerHTML=`🔊 ${w.en} = ${w.cn}`;
-div.onclick=()=>speak(w.en);
-box.appendChild(div);
-});
+   div.onclick = ()=>{
+     let msg = new SpeechSynthesisUtterance(w.split("=")[0]);
+     speechSynthesis.speak(msg);
+   };
 
-document.getElementById("sentences").innerHTML =
-sentences.map(s=>`📝 ${s}`).join("<br>");
-
-// ================= 语音 =================
-function speak(t){
-let u=new SpeechSynthesisUtterance(t);
-u.lang="en-US";
-speechSynthesis.speak(u);
+   box.appendChild(div);
+ });
 }
+renderWords();
 
-// ================= 复习系统 =================
-let reviewData = JSON.parse(localStorage.getItem("reviewData")||"{}");
+// ===== 句子 =====
+function renderSentences(){
+ let box = document.getElementById("sentences");
+ box.innerHTML = "";
+ sentences.forEach(s=>{
+   let div = document.createElement("div");
+   div.className = "word";
+   div.innerText = s;
 
-let reviewList = [];
+   div.onclick = ()=>{
+     let msg = new SpeechSynthesisUtterance(s);
+     speechSynthesis.speak(msg);
+   };
 
-words.forEach(w=>{
-let last = reviewData[w.en];
-if(!last || [1,2,4,7,15].includes(day-last)){
-reviewList.push(w.en);
-reviewData[w.en]=day;
+   box.appendChild(div);
+ });
 }
-});
+renderSentences();
 
-localStorage.setItem("reviewData",JSON.stringify(reviewData));
-
-document.getElementById("reviewBox").innerHTML =
-reviewList.map(w=>"🔁 "+w).join("<br>");
-
-// ================= 打卡 =================
+// ===== 打卡系统 =====
 function checkin(){
-let logs=JSON.parse(localStorage.getItem("logs")||"[]");
-let today=new Date().toDateString();
-if(!logs.includes(today)) logs.push(today);
-localStorage.setItem("logs",JSON.stringify(logs));
-showLogs(logs);
+ let today = new Date().toDateString();
+ let last = localStorage.getItem("last");
+
+ if(last === today){
+   alert("今天已打卡");
+   return;
+ }
+
+ let streak = parseInt(localStorage.getItem("streak") || "0") + 1;
+
+ localStorage.setItem("streak", streak);
+ localStorage.setItem("last", today);
+
+ document.getElementById("streak").innerText =
+ "连续学习：" + streak + " 天";
 }
 
-function showLogs(logs){
-document.getElementById("check").innerHTML =
-"已打卡：" + logs.length + " 天";
-}
-
-showLogs(JSON.parse(localStorage.getItem("logs")||"[]"));
-
-// ================= 状态 =================
-document.getElementById("status").innerHTML =
-"今日学习单词：" + words.length + "<br>" +
-"今日例句：" + sentences.length;
-
-// ================= 统计 =================
-document.getElementById("stats").innerHTML =
-"系统运行正常 ✔<br>学习中...";
-
-function show(page){
-document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-document.getElementById(page).classList.add("active");
-}
+document.getElementById("streak").innerText =
+"连续学习：" + (localStorage.getItem("streak") || 0) + " 天";
 
 </script>
 
