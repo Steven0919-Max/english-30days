@@ -3,94 +3,42 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI英语 Pro++ App</title>
+<title>AI英语学习 V4 免费增强版</title>
 
 <style>
-body{font-family:Arial;margin:0;background:#f4f6f8}
-
-header{
-background:#111;color:#fff;padding:12px;text-align:center;
-}
-
-.nav{
-display:flex;
-flex-wrap:wrap;
-background:#fff;
-padding:8px;
-gap:5px;
-justify-content:center;
-}
-
-.nav button{
-padding:8px 10px;
-border:none;
-border-radius:8px;
-background:#eee;
-cursor:pointer;
-font-size:13px;
-}
-
-.page{display:none;padding:12px}
-.active{display:block}
-
-.card{background:#fff;margin:10px 0;padding:12px;border-radius:12px}
-
-.item{padding:6px 0;cursor:pointer;color:#1a73e8}
-
-.opt{display:block;padding:8px;margin:5px;background:#eee;border-radius:8px;cursor:pointer}
-
-.good{background:#c8f7c5}
-.bad{background:#ffd6d6}
+body{font-family:Arial;margin:0;background:#f4f6f8;text-align:center}
+header{background:#111;color:#fff;padding:14px}
+.card{background:#fff;margin:10px;padding:12px;border-radius:12px}
+.item{padding:8px;margin:6px;background:#eee;border-radius:10px;cursor:pointer}
+.good{background:#b6f7b0}
+.bad{background:#ffb3b3}
+.tag{font-size:12px;color:#666}
+.btn{padding:10px 14px;background:#58cc02;color:#fff;border:none;border-radius:10px}
 </style>
 </head>
 
 <body>
 
-<header>📱 AI英语 Pro++</header>
+<header>📘 AI英语学习 V4（免费增强版）</header>
 
-<!-- 🔘 App导航 -->
-<div class="nav">
-<button onclick="show('home')">🏠首页</button>
-<button onclick="show('words')">📚高频词</button>
-<button onclick="show('phrase')">💬口语</button>
-<button onclick="show('quiz')">🧠练习</button>
-<button onclick="show('wrong')">🔁错题</button>
-<button onclick="show('ai')">🤖AI老师</button>
-</div>
-
-<!-- 🏠 首页 -->
-<div id="home" class="page active">
 <div class="card">
 <h3>📅 Day <span id="day"></span></h3>
-</div>
-</div>
-
-<!-- 📚 高频词 -->
-<div id="words" class="page">
-<div class="card" id="wordBox"></div>
+<div class="tag" id="progress"></div>
 </div>
 
-<!-- 💬 口语 -->
-<div id="phrase" class="page">
-<div class="card" id="phraseBox"></div>
-</div>
-
-<!-- 🧠 练习 -->
-<div id="quiz" class="page">
-<div class="card" id="quizBox"></div>
-</div>
-
-<!-- 🔁 错题 -->
-<div id="wrong" class="page">
-<div class="card" id="wrongBox"></div>
-</div>
-
-<!-- 🤖 AI老师 -->
-<div id="ai" class="page">
 <div class="card">
-<h3>🤖 AI英语老师（模拟版）</h3>
-<div id="aiBox">输入功能后续可升级真实AI</div>
+<h3>📚 今日学习</h3>
+<div id="study"></div>
 </div>
+
+<div class="card">
+<h3>🧠 今日练习</h3>
+<div id="quiz"></div>
+</div>
+
+<div class="card">
+<h3>🔁 复习区</h3>
+<div id="review"></div>
 </div>
 
 <script>
@@ -118,106 +66,141 @@ speechSynthesis.speak(u);
 }
 
 /////////////////////////////////////////////////////
-// 📚 高频词
+// 🧠 分层词库（模拟1000词结构）
 /////////////////////////////////////////////////////
-const words=[
-["hello","你好"],["want","想要"],["go","去"],
-["eat","吃"],["like","喜欢"],["water","水"]
+const core=["want","like","go","eat","drink","have","need","take","give","make"];
+const daily=["water","food","home","school","time","money","work","book","car","phone"];
+const scene=["restaurant","airport","hotel","bus","train","coffee","order","menu","ticket","meeting"];
+
+/////////////////////////////////////////////////////
+// 💬 句型系统（核心500句基础）
+/////////////////////////////////////////////////////
+const templates=[
+"I want ___",
+"I like ___",
+"I need ___",
+"Can I have ___",
+"Where is ___",
+"I go to ___"
 ];
 
-let wb=document.getElementById("wordBox");
+/////////////////////////////////////////////////////
+// 🔁 每日稳定生成（不重复）
+/////////////////////////////////////////////////////
+function seed(i){
+return Math.abs(Math.sin(day+i)*10000)%1;
+}
+
+function pick(arr,n,startSeed){
+let res=[];
+let used=new Set();
+
+let i=0;
+while(res.length<n){
+let idx=Math.floor(seed(startSeed+i)*arr.length);
+let w=arr[idx];
+if(!used.has(w)){
+used.add(w);
+res.push(w);
+}
+i++;
+}
+return res;
+}
+
+/////////////////////////////////////////////////////
+// 📚 今日单词（5个）
+/////////////////////////////////////////////////////
+let words=[
+...pick(core,2,1),
+...pick(daily,2,5),
+...pick(scene,1,9)
+];
+
+/////////////////////////////////////////////////////
+// 💬 今日句子（2个）
+/////////////////////////////////////////////////////
+let sentences=[];
+for(let i=0;i<2;i++){
+let tpl=templates[Math.floor(seed(i+20)*templates.length)];
+let w=words[Math.floor(seed(i+30)*words.length)];
+sentences.push(tpl.replace("___",w));
+}
+
+/////////////////////////////////////////////////////
+// 📚 渲染学习
+/////////////////////////////////////////////////////
+let study=document.getElementById("study");
+
 words.forEach(w=>{
 let d=document.createElement("div");
 d.className="item";
-d.innerText=w[0]+" = "+w[1];
-d.onclick=()=>speak(w[0]);
-wb.appendChild(d);
+d.innerText="🔤 "+w;
+d.onclick=()=>speak(w);
+study.appendChild(d);
 });
 
-/////////////////////////////////////////////////////
-// 💬 口语
-/////////////////////////////////////////////////////
-const phrases=[
-"I want water",
-"I like food",
-"Where is the toilet?",
-"Can you help me?"
-];
-
-let pb=document.getElementById("phraseBox");
-phrases.forEach(p=>{
+sentences.forEach(s=>{
 let d=document.createElement("div");
 d.className="item";
-d.innerText=p;
-d.onclick=()=>speak(p);
-pb.appendChild(d);
+d.innerText="💬 "+s;
+d.onclick=()=>speak(s);
+study.appendChild(d);
 });
 
 /////////////////////////////////////////////////////
-// 🧠 练习
+// 🧠 简单练习
 /////////////////////////////////////////////////////
-const quiz=[
+let quiz=[
 {q:"I ___ water",a:"want",opts:["want","go","eat"]},
-{q:"I ___ hungry",a:"am",opts:["am","is","are"]}
+{q:"I ___ food",a:"like",opts:["like","run","sleep"]},
+{q:"Where ___ you go?",a:"do",opts:["do","does","did"]}
 ];
 
-let wrongs=JSON.parse(localStorage.getItem("wrongs")||"[]");
+let review=JSON.parse(localStorage.getItem("review")||"[]");
 
-function renderQuiz(){
-let box=document.getElementById("quizBox");
-box.innerHTML="";
-quiz.concat(wrongs.slice(-5)).forEach(item=>{
-let div=document.createElement("div");
-div.innerHTML="<b>"+item.q+"</b>";
+let qbox=document.getElementById("quiz");
 
-item.opts.forEach(opt=>{
+quiz.concat(review.slice(-3)).forEach(q=>{
+let d=document.createElement("div");
+d.innerHTML="❓ "+q.q;
+
+q.opts.forEach(o=>{
 let b=document.createElement("div");
-b.className="opt";
-b.innerText=opt;
+b.className="item";
+b.innerText=o;
 
 b.onclick=()=>{
-if(opt===item.a){
+if(o===q.a){
 b.classList.add("good");
 }else{
 b.classList.add("bad");
-wrongs.push(item);
-localStorage.setItem("wrongs",JSON.stringify(wrongs));
-renderWrong();
+review.push(q);
+localStorage.setItem("review",JSON.stringify(review));
+renderReview();
 }
 };
-
-div.appendChild(b);
+d.appendChild(b);
 });
 
-box.appendChild(div);
+qbox.appendChild(d);
 });
-}
 
 /////////////////////////////////////////////////////
-// 🔁 错题
+// 🔁 复习系统
 /////////////////////////////////////////////////////
-function renderWrong(){
-let box=document.getElementById("wrongBox");
+function renderReview(){
+let box=document.getElementById("review");
 box.innerHTML="";
-wrongs.slice(-10).forEach(w=>{
+review.slice(-6).forEach(r=>{
 let d=document.createElement("div");
-d.innerText="🔁 "+w.q;
+d.className="item";
+d.innerText="🔁 "+r.q;
 box.appendChild(d);
 });
 }
 
-/////////////////////////////////////////////////////
-// 📱 页面切换
-/////////////////////////////////////////////////////
-function show(id){
-document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-document.getElementById(id).classList.add("active");
-
-if(id==="quiz") renderQuiz();
-if(id==="wrong") renderWrong();
-}
-
-renderWrong();
+renderReview();
 
 </script>
 
