@@ -4,9 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>AI英语 V9.1</title>
+<title>AI英语 V9.2 防缓存版</title>
 
-<link rel="manifest" href="manifest.json">
+<!-- ⭐ 防缓存核心（关键） -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 
 <style>
 body{margin:0;font-family:Arial;background:#f6f7fb}
@@ -18,6 +21,13 @@ text-align:center;
 padding:10px;
 font-size:18px;
 font-weight:bold;
+}
+
+.version{
+text-align:center;
+font-size:12px;
+color:#888;
+margin-top:-5px;
 }
 
 .card{
@@ -66,7 +76,8 @@ font-size:14px;
 
 <body>
 
-<header>📘 AI英语 V9.1（发音+音标版）</header>
+<header>📘 AI英语 V9.2</header>
+<div class="version" id="version"></div>
 
 <!-- HOME -->
 <div id="home" class="page active">
@@ -80,12 +91,12 @@ font-size:14px;
 <!-- LESSON -->
 <div id="lesson" class="page">
 <div class="card">
-<h3>📚 单词（点击发音）</h3>
+<h3>📚 单词</h3>
 <div id="words"></div>
 </div>
 
 <div class="card">
-<h3>💬 句子（点击朗读）</h3>
+<h3>💬 句子</h3>
 <div id="sentences"></div>
 </div>
 </div>
@@ -101,42 +112,44 @@ font-size:14px;
 <button class="btn" onclick="next()">下一题</button>
 </div>
 
-<!-- REVIEW -->
-<div id="review" class="page">
-<div class="card">
-<h3>🔁 错题本</h3>
-<div id="wrong"></div>
-</div>
-</div>
-
 <!-- NAV -->
 <div class="nav">
 <div onclick="go('home')">🏠</div>
 <div onclick="go('lesson')">📚</div>
 <div onclick="go('practice')">🧠</div>
-<div onclick="go('review')">🔁</div>
 </div>
 
 <script>
 
-let db = JSON.parse(localStorage.getItem("db")||"{}");
-if(!db.day){db.day=1;db.wrong=[];}
+/////////////////////////////////////////////////////
+// 🧠 ⭐ 防缓存核心（版本锁）
+/////////////////////////////////////////////////////
+
+const APP_VERSION = "V9.2_20260705";
+
+document.getElementById("version").innerText =
+"版本：" + APP_VERSION;
+
+// ⭐ 强制清理旧缓存（关键）
+if ('caches' in window) {
+  caches.keys().then(names => {
+    for (let name of names) caches.delete(name);
+  });
+}
 
 /////////////////////////////////////////////////////
-// 🧠 带音标词库
+// 📚 数据
 /////////////////////////////////////////////////////
+
 const vocab=[
-["like","/laɪk/","喜欢"],
-["go","/ɡoʊ/","去"],
-["eat","/iːt/","吃"],
-["drink","/drɪŋk/","喝"],
-["water","/ˈwɔːtər/","水"],
-["want","/wɑːnt/","想要"],
-["need","/niːd/","需要"]
+["like","喜欢"],["go","去"],["eat","吃"],["drink","喝"],["water","水"],
+["want","想要"],["need","需要"],["play","玩"],["see","看"]
 ];
 
+// 稳定种子（每天固定）
 function seed(){
-return db.day*9;
+let d=new Date();
+return d.getFullYear()*1000+(d.getMonth()+1)*50+d.getDate();
 }
 
 function today(){
@@ -158,50 +171,39 @@ return {words,sentences};
 let data=today();
 
 /////////////////////////////////////////////////////
-// 🔊 发音
-/////////////////////////////////////////////////////
-function speak(t){
-let u=new SpeechSynthesisUtterance(t);
-u.lang="en-US";
-speechSynthesis.speak(u);
-}
-
-/////////////////////////////////////////////////////
 // 🏠 渲染
 /////////////////////////////////////////////////////
+
 document.getElementById("today").innerText=
-"Day "+db.day+" ｜ 5词 + 2句";
+"Day "+new Date().getDate()+" ｜ 5词 + 2句";
 
 document.getElementById("words").innerHTML=
 data.words.map(w=>`
-<div class='option' onclick='speak("${w[0]}")'>
-🔊 ${w[0]} ${w[1]} = ${w[2]}
-</div>
+<div class='option'>🔊 ${w[0]} = ${w[1]}</div>
 `).join("");
 
 document.getElementById("sentences").innerHTML=
 data.sentences.map(s=>`
-<div class='option' onclick='speak("${s}")'>
-🔊 ${s}
-</div>
+<div class='option'>${s}</div>
 `).join("");
 
 /////////////////////////////////////////////////////
 // 🧠 练习
 /////////////////////////////////////////////////////
+
 let i=0;
 
 function show(){
 let w=data.words[i%5];
 
-let opts=shuffle([w[2],"水","吃"]);
+let opts=shuffle([w[1],"水","吃"]);
 
 document.getElementById("q").innerText=
 "“"+w[0]+"”是什么意思？";
 
 document.getElementById("opts").innerHTML=
 opts.map(o=>`
-<div class='option' onclick='check("${o}","${w[2]}")'>${o}</div>
+<div class='option' onclick='check("${o}","${w[1]}")'>${o}</div>
 `).join("");
 
 document.getElementById("result").innerText="";
@@ -215,8 +217,6 @@ a===c?"✅ 正确":"❌ 错误 → "+c;
 function next(){
 i++;
 if(i>=data.words.length){
-db.day++;
-localStorage.setItem("db",JSON.stringify(db));
 alert("完成今天！");
 location.reload();
 return;
@@ -231,16 +231,13 @@ return a.sort(()=>Math.random()-0.5);
 show();
 
 /////////////////////////////////////////////////////
-// 页面切换
+// 📱 页面切换
 /////////////////////////////////////////////////////
+
 function go(p){
 document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
 document.getElementById(p).classList.add("active");
-
-if(p==="review"){
-document.getElementById("wrong").innerHTML=
-db.wrong.slice(-10).map(w=>`<div class='option'>${w}</div>`).join("");
-}
+if(p==="practice") show();
 }
 
 </script>
