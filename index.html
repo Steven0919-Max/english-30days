@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>AI英语 V9</title>
+<title>AI英语 V9.1</title>
 
-<!-- PWA核心 -->
 <link rel="manifest" href="manifest.json">
 
 <style>
@@ -29,6 +28,14 @@ border-radius:14px;
 box-shadow:0 2px 10px rgba(0,0,0,0.06);
 }
 
+.option{
+padding:12px;
+background:#eee;
+margin:8px 0;
+border-radius:10px;
+font-size:16px;
+}
+
 .btn{
 width:100%;
 padding:14px;
@@ -37,13 +44,6 @@ color:#fff;
 border:none;
 border-radius:12px;
 font-size:16px;
-}
-
-.option{
-padding:12px;
-background:#eee;
-margin:8px 0;
-border-radius:10px;
 }
 
 .nav{
@@ -66,7 +66,7 @@ font-size:14px;
 
 <body>
 
-<header>📘 AI英语 V9（可安装App版）</header>
+<header>📘 AI英语 V9.1（发音+音标版）</header>
 
 <!-- HOME -->
 <div id="home" class="page active">
@@ -80,12 +80,12 @@ font-size:14px;
 <!-- LESSON -->
 <div id="lesson" class="page">
 <div class="card">
-<h3>📚 单词</h3>
+<h3>📚 单词（点击发音）</h3>
 <div id="words"></div>
 </div>
 
 <div class="card">
-<h3>💬 句子</h3>
+<h3>💬 句子（点击朗读）</h3>
 <div id="sentences"></div>
 </div>
 </div>
@@ -119,18 +119,28 @@ font-size:14px;
 
 <script>
 
-// ===== 数据 =====
 let db = JSON.parse(localStorage.getItem("db")||"{}");
 if(!db.day){db.day=1;db.wrong=[];}
 
+/////////////////////////////////////////////////////
+// 🧠 带音标词库
+/////////////////////////////////////////////////////
 const vocab=[
-["like","喜欢"],["go","去"],["eat","吃"],["drink","喝"],["water","水"],
-["want","想要"],["need","需要"],["play","玩"],["see","看"]
+["like","/laɪk/","喜欢"],
+["go","/ɡoʊ/","去"],
+["eat","/iːt/","吃"],
+["drink","/drɪŋk/","喝"],
+["water","/ˈwɔːtər/","水"],
+["want","/wɑːnt/","想要"],
+["need","/niːd/","需要"]
 ];
 
-// ===== 固定生成 =====
+function seed(){
+return db.day*9;
+}
+
 function today(){
-let s=db.day*11;
+let s=seed();
 
 let words=[];
 for(let i=0;i<5;i++){
@@ -147,44 +157,59 @@ return {words,sentences};
 
 let data=today();
 
-// ===== 渲染 =====
+/////////////////////////////////////////////////////
+// 🔊 发音
+/////////////////////////////////////////////////////
+function speak(t){
+let u=new SpeechSynthesisUtterance(t);
+u.lang="en-US";
+speechSynthesis.speak(u);
+}
+
+/////////////////////////////////////////////////////
+// 🏠 渲染
+/////////////////////////////////////////////////////
 document.getElementById("today").innerText=
 "Day "+db.day+" ｜ 5词 + 2句";
 
-// words
 document.getElementById("words").innerHTML=
-data.words.map(w=>`<div class='option'>${w[0]} = ${w[1]}</div>`).join("");
+data.words.map(w=>`
+<div class='option' onclick='speak("${w[0]}")'>
+🔊 ${w[0]} ${w[1]} = ${w[2]}
+</div>
+`).join("");
 
-// sentences
 document.getElementById("sentences").innerHTML=
-data.sentences.map(s=>`<div class='option'>${s}</div>`).join("");
+data.sentences.map(s=>`
+<div class='option' onclick='speak("${s}")'>
+🔊 ${s}
+</div>
+`).join("");
 
-// ===== 练习 =====
+/////////////////////////////////////////////////////
+// 🧠 练习
+/////////////////////////////////////////////////////
 let i=0;
 
 function show(){
 let w=data.words[i%5];
 
-let opts=shuffle([w[1],"水","吃"]);
+let opts=shuffle([w[2],"水","吃"]);
 
-document.getElementById("q").innerText="“"+w[0]+"”是什么意思？";
+document.getElementById("q").innerText=
+"“"+w[0]+"”是什么意思？";
 
 document.getElementById("opts").innerHTML=
 opts.map(o=>`
-<div class='option' onclick='check("${o}","${w[1]}")'>${o}</div>
+<div class='option' onclick='check("${o}","${w[2]}")'>${o}</div>
 `).join("");
 
 document.getElementById("result").innerText="";
 }
 
 function check(a,c){
-if(a===c){
-document.getElementById("result").innerText="✅ 正确";
-}else{
-document.getElementById("result").innerText="❌ 错误";
-db.wrong.push(a);
-localStorage.setItem("db",JSON.stringify(db));
-}
+document.getElementById("result").innerText=
+a===c?"✅ 正确":"❌ 错误 → "+c;
 }
 
 function next(){
@@ -205,12 +230,13 @@ return a.sort(()=>Math.random()-0.5);
 
 show();
 
-
-// ===== 页面切换 =====
+/////////////////////////////////////////////////////
+// 页面切换
+/////////////////////////////////////////////////////
 function go(p){
 document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
 document.getElementById(p).classList.add("active");
-if(p==="practice") show();
+
 if(p==="review"){
 document.getElementById("wrong").innerHTML=
 db.wrong.slice(-10).map(w=>`<div class='option'>${w}</div>`).join("");
