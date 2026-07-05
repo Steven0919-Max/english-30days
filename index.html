@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI英语 V6 真App系统</title>
+<title>AI英语 V6.1 修复版</title>
 
 <style>
 body{
@@ -12,221 +12,138 @@ font-family:Arial;
 background:#f6f7fb;
 }
 
-.app{
-max-width:420px;
-margin:auto;
-padding:15px;
-}
-
 /* 顶部 */
 header{
 text-align:center;
 font-size:18px;
 font-weight:bold;
-margin-bottom:10px;
+padding:10px;
 }
+
+/* 页面 */
+.page{display:none;padding:12px}
+.active{display:block}
 
 /* 卡片 */
 .card{
 background:#fff;
-padding:16px;
-border-radius:16px;
+padding:14px;
+border-radius:14px;
 margin:10px 0;
-box-shadow:0 4px 15px rgba(0,0,0,0.08);
+box-shadow:0 3px 10px rgba(0,0,0,0.08);
 }
 
 /* 按钮 */
 .btn{
 width:100%;
-padding:12px;
+padding:14px;
+font-size:16px;
 background:#58cc02;
 color:#fff;
 border:none;
 border-radius:12px;
-font-size:16px;
 margin-top:10px;
 }
 
-/* 导航 */
+/* 选项 */
+.option{
+padding:14px;
+margin:8px 0;
+background:#eee;
+border-radius:12px;
+font-size:16px;
+}
+
+/* 底部导航（修复重点） */
 .nav{
-display:flex;
-justify-content:space-around;
-background:#fff;
-padding:10px;
 position:fixed;
 bottom:0;
 left:0;
 right:0;
+height:70px;
+background:#fff;
+display:flex;
+justify-content:space-around;
+align-items:center;
 box-shadow:0 -2px 10px rgba(0,0,0,0.08);
 }
 
 .nav div{
-font-size:12px;
-cursor:pointer;
-}
-
-/* 页面 */
-.page{display:none}
-.active{display:block}
-
-/* 选项 */
-.option{
+font-size:14px;
+text-align:center;
+flex:1;
 padding:10px;
-margin:6px 0;
-background:#eee;
-border-radius:10px;
 cursor:pointer;
 }
 
+/* 练习 */
 .correct{background:#b6f7b0}
 .wrong{background:#ffb3b3}
 
-.progress{
-height:8px;
-background:#ddd;
-border-radius:10px;
-overflow:hidden;
-margin:10px 0;
+.q{
+font-size:18px;
+margin-bottom:10px;
 }
 
-.bar{
-height:100%;
-width:0%;
-background:#58cc02;
-}
-
-.small{font-size:12px;color:#666}
 </style>
 </head>
 
 <body>
 
-<div class="app">
-
-<header>📘 AI英语 V6 真App系统</header>
+<header>📘 AI英语学习 V6.1</header>
 
 <!-- 🏠 HOME -->
 <div id="home" class="page active">
-
 <div class="card">
-<h3>📍 今日任务</h3>
+<h3>📅 今日学习任务</h3>
 <div id="task"></div>
-
 <button class="btn" onclick="go('lesson')">开始学习</button>
 </div>
-
 </div>
 
-<!-- 📚 LESSON -->
+<!-- 📚 学习 -->
 <div id="lesson" class="page">
+<div class="card">
+<h3>🔤 今日单词（5个）</h3>
+<div id="words"></div>
+</div>
 
 <div class="card">
-<h3>📚 学习内容</h3>
-<div id="words"></div>
+<h3>💬 今日句子（2个）</h3>
+<div id="sentences"></div>
 </div>
 
 <button class="btn" onclick="go('practice')">进入练习</button>
 </div>
 
-<!-- 🧠 PRACTICE -->
+<!-- 🧠 练习 -->
 <div id="practice" class="page">
-
 <div class="card">
-
-<div class="progress">
-<div class="bar" id="bar"></div>
-</div>
-
-<h3 id="q"></h3>
+<div class="q" id="q"></div>
 <div id="opts"></div>
-
 <button class="btn" id="next" onclick="next()" style="display:none;">下一题</button>
-
+</div>
 </div>
 
-</div>
-
-<!-- 🏆 PROGRESS -->
-<div id="progress" class="page">
-
-<div class="card">
-<h3>🔥 学习进度</h3>
-<div id="streak"></div>
-<div id="level"></div>
-</div>
-
-</div>
-
-</div>
-
-<!-- NAV -->
+<!-- 底部导航（修复放大版） -->
 <div class="nav">
-<div onclick="go('home')">🏠</div>
-<div onclick="go('lesson')">📚</div>
-<div onclick="go('practice')">🧠</div>
-<div onclick="go('progress')">🏆</div>
+<div onclick="go('home')">🏠<br>首页</div>
+<div onclick="go('lesson')">📚<br>学习</div>
+<div onclick="go('practice')">🧠<br>练习</div>
 </div>
 
 <script>
 
 /////////////////////////////////////////////////////
-// 🧠 状态系统（真正App核心）
+// 📅 状态
 /////////////////////////////////////////////////////
-let state = JSON.parse(localStorage.getItem("state")||"{}");
-
-if(!state.day){
-state.day=1;
-state.streak=0;
-state.level=1;
+let start = localStorage.getItem("startDay");
+if(!start){
+start = Date.now();
+localStorage.setItem("startDay",start);
 }
 
-/////////////////////////////////////////////////////
-// 📍 学习路径系统
-/////////////////////////////////////////////////////
-const path=[
-"基础词汇",
-"点餐英语",
-"出行英语",
-"工作英语",
-"综合复习"
-];
-
-/////////////////////////////////////////////////////
-// 📚 每日任务
-/////////////////////////////////////////////////////
-function getTask(){
-return path[state.day % path.length];
-}
-
-document.getElementById("task").innerText =
-"Day "+state.day+" - "+getTask();
-
-/////////////////////////////////////////////////////
-// 📚 词库（结构化）
-/////////////////////////////////////////////////////
-const lessons={
-"基础词汇":["want","like","go","eat"],
-"点餐英语":["menu","water","rice","order"],
-"出行英语":["bus","train","hotel","ticket"],
-"工作英语":["meeting","email","report","team"]
-};
-
-/////////////////////////////////////////////////////
-// 📚 当前课程
-/////////////////////////////////////////////////////
-let currentLesson = lessons[getTask()] || lessons["基础词汇"];
-
-/////////////////////////////////////////////////////
-// 📚 渲染学习
-/////////////////////////////////////////////////////
-let wbox=document.getElementById("words");
-currentLesson.forEach(w=>{
-let d=document.createElement("div");
-d.className="option";
-d.innerText=w;
-d.onclick=()=>speak(w);
-wbox.appendChild(d);
-});
+let day = Math.floor((Date.now()-start)/86400000)+1;
 
 /////////////////////////////////////////////////////
 // 🔊 语音
@@ -238,16 +155,85 @@ speechSynthesis.speak(u);
 }
 
 /////////////////////////////////////////////////////
-// 🧠 练习系统
+// 📚 今日词（固定当天）
 /////////////////////////////////////////////////////
-let quiz=[
-{q:"I ___ water",a:"want",opts:["want","go","eat"]},
-{q:"I ___ food",a:"like",opts:["like","run","sleep"]},
-{q:"I go to ___",a:"school",opts:["school","eat","drink"]}
+const pool=["want","like","go","eat","drink","water","food","home","school","time"];
+
+function pick(n){
+let res=[];
+for(let i=0;i<n;i++){
+res.push(pool[(day+i)%pool.length]);
+}
+return res;
+}
+
+let words = pick(5);
+
+/////////////////////////////////////////////////////
+// 💬 今日句子（基于今日词）
+/////////////////////////////////////////////////////
+const templates=[
+"I want ___",
+"I like ___",
+"I need ___",
+"I go to ___",
+"Can I have ___"
 ];
 
+let sentences=[
+templates[day%templates.length].replace("___",words[0]),
+templates[(day+1)%templates.length].replace("___",words[1])
+];
+
+/////////////////////////////////////////////////////
+// 📚 渲染学习
+/////////////////////////////////////////////////////
+document.getElementById("task").innerText=
+"Day "+day+" ｜ 5词 + 2句（今日专属）";
+
+let wbox=document.getElementById("words");
+words.forEach(w=>{
+let d=document.createElement("div");
+d.className="option";
+d.innerText=w;
+d.onclick=()=>speak(w);
+wbox.appendChild(d);
+});
+
+let sbox=document.getElementById("sentences");
+sentences.forEach(s=>{
+let d=document.createElement("div");
+d.className="option";
+d.innerText=s;
+d.onclick=()=>speak(s);
+sbox.appendChild(d);
+});
+
+/////////////////////////////////////////////////////
+// 🧠 练习（绑定今日内容🔥核心修复）
+/////////////////////////////////////////////////////
+let quiz=[];
+words.forEach(w=>{
+quiz.push({
+q:"I want ___",
+a:w,
+opts:shuffle([w,"food","water"])
+});
+});
+
+sentences.forEach(s=>{
+quiz.push({
+q:s.replace(words[0],"___"),
+a:words[0],
+opts:shuffle([words[0],"go","eat"])
+});
+});
+
+function shuffle(arr){
+return arr.sort(()=>Math.random()-0.5);
+}
+
 let i=0;
-let progress=0;
 
 function show(){
 let q=quiz[i];
@@ -273,8 +259,6 @@ let all=document.querySelectorAll(".option");
 
 if(o===a){
 el.classList.add("correct");
-progress+=33;
-updateBar();
 }else{
 el.classList.add("wrong");
 }
@@ -286,42 +270,24 @@ document.getElementById("next").style.display="block";
 },300);
 }
 
-function updateBar(){
-document.getElementById("bar").style.width=progress+"%";
-}
-
 function next(){
 i++;
 if(i>=quiz.length){
-
-state.day++;
-state.streak++;
-
-localStorage.setItem("state",JSON.stringify(state));
-
-alert("🎉 今日完成！进入下一天");
-
+alert("🎉 今日完成！");
 location.reload();
 return;
 }
-
 show();
 }
 
 /////////////////////////////////////////////////////
-// 🚀 页面控制
+// 页面控制
 /////////////////////////////////////////////////////
-function go(page){
-document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-document.getElementById(page).classList.add("active");
+function go(p){
+document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+document.getElementById(p).classList.add("active");
 
-if(page==="practice") show();
-if(page==="progress") renderProgress();
-}
-
-function renderProgress(){
-document.getElementById("streak").innerText="🔥 streak: "+state.streak;
-document.getElementById("level").innerText="⭐ level: "+state.level;
+if(p==="practice") show();
 }
 
 </script>
