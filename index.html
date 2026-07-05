@@ -4,31 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>AI英语 V9.3</title>
+<title>AI英语 V11 终极版</title>
 
+<!-- 防缓存 -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 
 <style>
 body{margin:0;font-family:Arial;background:#f6f7fb}
+
+/* 页面 */
 .page{display:none;padding:12px}
 .active{display:block}
 
+/* 顶部 */
 header{
 text-align:center;
-padding:10px;
+padding:12px;
 font-size:18px;
 font-weight:bold;
 }
 
-.version{
-text-align:center;
-font-size:12px;
-color:#888;
-margin-top:-5px;
-}
-
+/* 卡片 */
 .card{
 background:#fff;
 padding:14px;
@@ -37,14 +35,26 @@ border-radius:14px;
 box-shadow:0 2px 10px rgba(0,0,0,0.06);
 }
 
+/* 按钮 */
+.btn{
+width:100%;
+padding:14px;
+background:#22c55e;
+color:#fff;
+border:none;
+border-radius:12px;
+font-size:16px;
+}
+
+/* 选项 */
 .option{
 padding:12px;
 background:#eee;
 margin:8px 0;
 border-radius:10px;
-font-size:16px;
 }
 
+/* 底部导航 */
 .nav{
 position:fixed;
 bottom:0;
@@ -65,26 +75,26 @@ font-size:14px;
 
 <body>
 
-<header>📘 AI英语 V9.3（发音修复版）</header>
-<div class="version" id="version"></div>
+<header>📘 AI英语 V11 终极学习系统</header>
 
 <!-- HOME -->
 <div id="home" class="page active">
 <div class="card">
 <h3>📅 今日任务</h3>
 <p id="today"></p>
+<button class="btn" onclick="go('learn')">开始学习</button>
 </div>
 </div>
 
-<!-- LESSON -->
-<div id="lesson" class="page">
+<!-- LEARN -->
+<div id="learn" class="page">
 <div class="card">
-<h3>📚 单词（点击发音）</h3>
+<h3>📚 今日单词（点击发音）</h3>
 <div id="words"></div>
 </div>
 
 <div class="card">
-<h3>💬 句子（点击朗读）</h3>
+<h3>💬 今日句子（点击朗读）</h3>
 <div id="sentences"></div>
 </div>
 </div>
@@ -97,140 +107,209 @@ font-size:14px;
 <p id="result"></p>
 </div>
 
-<button onclick="next()" style="width:100%;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:12px;">
-下一题
-</button>
+<button class="btn" onclick="next()">下一题</button>
+</div>
+
+<!-- REVIEW -->
+<div id="review" class="page">
+<div class="card">
+<h3>🔁 错题本</h3>
+<div id="wrong"></div>
+</div>
 </div>
 
 <!-- NAV -->
 <div class="nav">
 <div onclick="go('home')">🏠</div>
-<div onclick="go('lesson')">📚</div>
+<div onclick="go('learn')">📚</div>
 <div onclick="go('practice')">🧠</div>
+<div onclick="go('review')">🔁</div>
 </div>
 
 <script>
 
 /////////////////////////////////////////////////////
-// 🧠 版本
+// 🧠 V11 数据系统（稳定核心）
 /////////////////////////////////////////////////////
-const APP_VERSION = "V9.3_FIX_VOICE";
 
-document.getElementById("version").innerText =
-"版本：" + APP_VERSION;
+let db = JSON.parse(localStorage.getItem("db")||"{}");
 
-/////////////////////////////////////////////////////
-// 🔊 语音核心（恢复）
-/////////////////////////////////////////////////////
-function speak(text){
-let u = new SpeechSynthesisUtterance(text);
-u.lang = "en-US";
-speechSynthesis.speak(u);
+if(!db.day){
+db.day = 1;
+db.wrong = [];
 }
 
 /////////////////////////////////////////////////////
-// 📚 带音标词库（恢复）
+// 📚 语法安全词库（不会再出错）
 /////////////////////////////////////////////////////
-const vocab=[
-["like","/laɪk/","喜欢"],
-["go","/ɡoʊ/","去"],
-["eat","/iːt/","吃"],
-["drink","/drɪŋk/","喝"],
-["water","/ˈwɔːtər/","水"],
-["want","/wɑːnt/","想要"]
+
+const vocab = [
+{w:"go", type:"verb", cn:"去"},
+{w:"eat", type:"verb", cn:"吃"},
+{w:"drink", type:"verb", cn:"喝"},
+{w:"play", type:"verb", cn:"玩"},
+{w:"read", type:"verb", cn:"读"},
+{w:"water", type:"noun", cn:"水"},
+{w:"food", type:"noun", cn:"食物"}
 ];
 
 /////////////////////////////////////////////////////
-// 📅 稳定生成
+// 🧠 语法引擎（终极安全）
 /////////////////////////////////////////////////////
+
+function makeSentence(item){
+
+if(item.type === "verb"){
+return "I want to " + item.w;
+}
+
+if(item.type === "noun"){
+return "I need " + item.w;
+}
+
+return item.w;
+}
+
+/////////////////////////////////////////////////////
+// 📅 稳定生成（每天固定）
+/////////////////////////////////////////////////////
+
 function seed(){
-let d=new Date();
-return d.getFullYear()*1000+(d.getMonth()+1)*50+d.getDate();
+return db.day * 13;
 }
 
 function today(){
-let s=seed();
+
+let s = seed();
 
 let words=[];
 for(let i=0;i<5;i++){
 words.push(vocab[(s+i)%vocab.length]);
 }
 
-let sentences=[
-"I like "+words[0][0],
-"I want "+words[1][0]
-];
+let sentences = words.slice(0,2).map(makeSentence);
 
-return {words,sentences};
+return {words, sentences};
 }
 
-let data=today();
+let data = today();
 
 /////////////////////////////////////////////////////
-// 🏠 渲染
+// 🔊 发音
 /////////////////////////////////////////////////////
 
-document.getElementById("today").innerText=
-"Day "+new Date().getDate()+" ｜ 5词 + 2句";
+function speak(t){
+let u = new SpeechSynthesisUtterance(t);
+u.lang = "en-US";
+speechSynthesis.speak(u);
+}
 
-document.getElementById("words").innerHTML=
+/////////////////////////////////////////////////////
+// 🏠 渲染首页
+/////////////////////////////////////////////////////
+
+document.getElementById("today").innerText =
+"Day " + db.day + " ｜ 5词 + 2句";
+
+/////////////////////////////////////////////////////
+// 📚 学习页
+/////////////////////////////////////////////////////
+
+document.getElementById("words").innerHTML =
 data.words.map(w=>`
-<div class='option' onclick='speak("${w[0]}")'>
-🔊 ${w[0]} ${w[1]} = ${w[2]}
+<div class="option" onclick="speak('${w.w}')">
+🔊 ${w.w} = ${w.cn}
 </div>
 `).join("");
 
-document.getElementById("sentences").innerHTML=
+document.getElementById("sentences").innerHTML =
 data.sentences.map(s=>`
-<div class='option' onclick='speak("${s}")'>
+<div class="option" onclick="speak('${s}')">
 🔊 ${s}
 </div>
 `).join("");
 
 /////////////////////////////////////////////////////
-// 🧠 练习
+// 🧠 练习系统（完全语法安全）
 /////////////////////////////////////////////////////
-let i=0;
+
+let i = 0;
 
 function show(){
-let w=data.words[i%5];
 
-let opts=[w[2],"吃","喝"];
+let item = data.words[i % data.words.length];
 
-document.getElementById("q").innerText=
-"“"+w[0]+"”是什么意思？";
+let correct = makeSentence(item);
 
-document.getElementById("opts").innerHTML=
+let opts = shuffle([
+correct,
+"I go water",
+"I eat go",
+"Drink play food"
+]);
+
+document.getElementById("q").innerText =
+"选择正确句子：" + item.w;
+
+document.getElementById("opts").innerHTML =
 opts.map(o=>`
-<div class='option' onclick='check("${o}","${w[2]}")'>${o}</div>
+<div class="option" onclick="check('${o}','${correct}')">${o}</div>
 `).join("");
 
-document.getElementById("result").innerText="";
+document.getElementById("result").innerText = "";
 }
 
 function check(a,c){
-document.getElementById("result").innerText=
-a===c?"✅ 正确":"❌ 错误 → "+c;
+
+if(a === c){
+document.getElementById("result").innerText = "✅ 正确";
+}else{
+document.getElementById("result").innerText = "❌ 错误";
+db.wrong.push(a);
+localStorage.setItem("db",JSON.stringify(db));
+}
 }
 
 function next(){
 i++;
-if(i>=data.words.length){
-alert("完成今天学习！");
+
+if(i >= data.words.length){
+db.day++;
+localStorage.setItem("db",JSON.stringify(db));
+alert("🎉 今日完成！");
 location.reload();
 return;
 }
+
 show();
 }
 
-/////////////////////////////////////////////////////
-// 页面切换
-/////////////////////////////////////////////////////
-function go(p){
-document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
-document.getElementById(p).classList.add("active");
+function shuffle(a){
+return a.sort(()=>Math.random()-0.5);
+}
 
-if(p==="practice") show();
+/////////////////////////////////////////////////////
+// 🔁 错题
+/////////////////////////////////////////////////////
+
+function renderWrong(){
+document.getElementById("wrong").innerHTML =
+db.wrong.slice(-20).map(w=>`
+<div class="option">${w}</div>
+`).join("");
+}
+
+/////////////////////////////////////////////////////
+// 📱 页面切换
+/////////////////////////////////////////////////////
+
+function go(page){
+
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(page).classList.add("active");
+
+if(page === "practice") show();
+if(page === "review") renderWrong();
 }
 
 show();
