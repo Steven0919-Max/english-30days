@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>AI英语 V9.2 防缓存版</title>
+<title>AI英语 V9.3</title>
 
-<!-- ⭐ 防缓存核心（关键） -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
@@ -46,16 +45,6 @@ border-radius:10px;
 font-size:16px;
 }
 
-.btn{
-width:100%;
-padding:14px;
-background:#22c55e;
-color:#fff;
-border:none;
-border-radius:12px;
-font-size:16px;
-}
-
 .nav{
 position:fixed;
 bottom:0;
@@ -76,7 +65,7 @@ font-size:14px;
 
 <body>
 
-<header>📘 AI英语 V9.2</header>
+<header>📘 AI英语 V9.3（发音修复版）</header>
 <div class="version" id="version"></div>
 
 <!-- HOME -->
@@ -84,19 +73,18 @@ font-size:14px;
 <div class="card">
 <h3>📅 今日任务</h3>
 <p id="today"></p>
-<button class="btn" onclick="go('lesson')">开始学习</button>
 </div>
 </div>
 
 <!-- LESSON -->
 <div id="lesson" class="page">
 <div class="card">
-<h3>📚 单词</h3>
+<h3>📚 单词（点击发音）</h3>
 <div id="words"></div>
 </div>
 
 <div class="card">
-<h3>💬 句子</h3>
+<h3>💬 句子（点击朗读）</h3>
 <div id="sentences"></div>
 </div>
 </div>
@@ -109,7 +97,9 @@ font-size:14px;
 <p id="result"></p>
 </div>
 
-<button class="btn" onclick="next()">下一题</button>
+<button onclick="next()" style="width:100%;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:12px;">
+下一题
+</button>
 </div>
 
 <!-- NAV -->
@@ -122,31 +112,37 @@ font-size:14px;
 <script>
 
 /////////////////////////////////////////////////////
-// 🧠 ⭐ 防缓存核心（版本锁）
+// 🧠 版本
 /////////////////////////////////////////////////////
-
-const APP_VERSION = "V9.2_20260705";
+const APP_VERSION = "V9.3_FIX_VOICE";
 
 document.getElementById("version").innerText =
 "版本：" + APP_VERSION;
 
-// ⭐ 强制清理旧缓存（关键）
-if ('caches' in window) {
-  caches.keys().then(names => {
-    for (let name of names) caches.delete(name);
-  });
+/////////////////////////////////////////////////////
+// 🔊 语音核心（恢复）
+/////////////////////////////////////////////////////
+function speak(text){
+let u = new SpeechSynthesisUtterance(text);
+u.lang = "en-US";
+speechSynthesis.speak(u);
 }
 
 /////////////////////////////////////////////////////
-// 📚 数据
+// 📚 带音标词库（恢复）
 /////////////////////////////////////////////////////
-
 const vocab=[
-["like","喜欢"],["go","去"],["eat","吃"],["drink","喝"],["water","水"],
-["want","想要"],["need","需要"],["play","玩"],["see","看"]
+["like","/laɪk/","喜欢"],
+["go","/ɡoʊ/","去"],
+["eat","/iːt/","吃"],
+["drink","/drɪŋk/","喝"],
+["water","/ˈwɔːtər/","水"],
+["want","/wɑːnt/","想要"]
 ];
 
-// 稳定种子（每天固定）
+/////////////////////////////////////////////////////
+// 📅 稳定生成
+/////////////////////////////////////////////////////
 function seed(){
 let d=new Date();
 return d.getFullYear()*1000+(d.getMonth()+1)*50+d.getDate();
@@ -179,31 +175,34 @@ document.getElementById("today").innerText=
 
 document.getElementById("words").innerHTML=
 data.words.map(w=>`
-<div class='option'>🔊 ${w[0]} = ${w[1]}</div>
+<div class='option' onclick='speak("${w[0]}")'>
+🔊 ${w[0]} ${w[1]} = ${w[2]}
+</div>
 `).join("");
 
 document.getElementById("sentences").innerHTML=
 data.sentences.map(s=>`
-<div class='option'>${s}</div>
+<div class='option' onclick='speak("${s}")'>
+🔊 ${s}
+</div>
 `).join("");
 
 /////////////////////////////////////////////////////
 // 🧠 练习
 /////////////////////////////////////////////////////
-
 let i=0;
 
 function show(){
 let w=data.words[i%5];
 
-let opts=shuffle([w[1],"水","吃"]);
+let opts=[w[2],"吃","喝"];
 
 document.getElementById("q").innerText=
 "“"+w[0]+"”是什么意思？";
 
 document.getElementById("opts").innerHTML=
 opts.map(o=>`
-<div class='option' onclick='check("${o}","${w[1]}")'>${o}</div>
+<div class='option' onclick='check("${o}","${w[2]}")'>${o}</div>
 `).join("");
 
 document.getElementById("result").innerText="";
@@ -217,28 +216,24 @@ a===c?"✅ 正确":"❌ 错误 → "+c;
 function next(){
 i++;
 if(i>=data.words.length){
-alert("完成今天！");
+alert("完成今天学习！");
 location.reload();
 return;
 }
 show();
 }
 
-function shuffle(a){
-return a.sort(()=>Math.random()-0.5);
-}
-
-show();
-
 /////////////////////////////////////////////////////
-// 📱 页面切换
+// 页面切换
 /////////////////////////////////////////////////////
-
 function go(p){
 document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
 document.getElementById(p).classList.add("active");
+
 if(p==="practice") show();
 }
+
+show();
 
 </script>
 
