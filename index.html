@@ -3,14 +3,42 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI英语学习 Pro++</title>
+<title>AI英语 Pro++ App</title>
 
 <style>
 body{font-family:Arial;margin:0;background:#f4f6f8}
-header{background:#111;color:#fff;padding:14px;text-align:center}
-.card{background:#fff;margin:10px;padding:12px;border-radius:12px}
+
+header{
+background:#111;color:#fff;padding:12px;text-align:center;
+}
+
+.nav{
+display:flex;
+flex-wrap:wrap;
+background:#fff;
+padding:8px;
+gap:5px;
+justify-content:center;
+}
+
+.nav button{
+padding:8px 10px;
+border:none;
+border-radius:8px;
+background:#eee;
+cursor:pointer;
+font-size:13px;
+}
+
+.page{display:none;padding:12px}
+.active{display:block}
+
+.card{background:#fff;margin:10px 0;padding:12px;border-radius:12px}
+
 .item{padding:6px 0;cursor:pointer;color:#1a73e8}
+
 .opt{display:block;padding:8px;margin:5px;background:#eee;border-radius:8px;cursor:pointer}
+
 .good{background:#c8f7c5}
 .bad{background:#ffd6d6}
 </style>
@@ -18,34 +46,51 @@ header{background:#111;color:#fff;padding:14px;text-align:center}
 
 <body>
 
-<header>📱 AI英语学习 Pro++</header>
+<header>📱 AI英语 Pro++</header>
 
+<!-- 🔘 App导航 -->
+<div class="nav">
+<button onclick="show('home')">🏠首页</button>
+<button onclick="show('words')">📚高频词</button>
+<button onclick="show('phrase')">💬口语</button>
+<button onclick="show('quiz')">🧠练习</button>
+<button onclick="show('wrong')">🔁错题</button>
+<button onclick="show('ai')">🤖AI老师</button>
+</div>
+
+<!-- 🏠 首页 -->
+<div id="home" class="page active">
 <div class="card">
 <h3>📅 Day <span id="day"></span></h3>
 </div>
-
-<!-- 高频词 -->
-<div class="card">
-<h3>📚 高频词汇</h3>
-<div id="words"></div>
 </div>
 
-<!-- 口语短句 -->
-<div class="card">
-<h3>💬 日常口语短句</h3>
-<div id="phrases"></div>
+<!-- 📚 高频词 -->
+<div id="words" class="page">
+<div class="card" id="wordBox"></div>
 </div>
 
-<!-- 练习 -->
-<div class="card">
-<h3>🧠 今日练习</h3>
-<div id="quiz"></div>
+<!-- 💬 口语 -->
+<div id="phrase" class="page">
+<div class="card" id="phraseBox"></div>
 </div>
 
-<!-- 错题 -->
+<!-- 🧠 练习 -->
+<div id="quiz" class="page">
+<div class="card" id="quizBox"></div>
+</div>
+
+<!-- 🔁 错题 -->
+<div id="wrong" class="page">
+<div class="card" id="wrongBox"></div>
+</div>
+
+<!-- 🤖 AI老师 -->
+<div id="ai" class="page">
 <div class="card">
-<h3>🔁 错题本</h3>
-<div id="wrong"></div>
+<h3>🤖 AI英语老师（模拟版）</h3>
+<div id="aiBox">输入功能后续可升级真实AI</div>
+</div>
 </div>
 
 <script>
@@ -63,73 +108,65 @@ let day = Math.floor((Date.now()-start)/86400000)+1;
 document.getElementById("day").innerText = day;
 
 /////////////////////////////////////////////////////
-// 📚 高频词汇（核心200词精简版）
-/////////////////////////////////////////////////////
-const words=[
-["hello","你好"],["thank","感谢"],["want","想要"],["go","去"],
-["eat","吃"],["drink","喝"],["like","喜欢"],["home","家"],
-["school","学校"],["water","水"],["food","食物"],["time","时间"]
-];
-
-let wbox=document.getElementById("words");
-words.forEach(w=>{
-let div=document.createElement("div");
-div.className="item";
-div.innerText=w[0]+" = "+w[1];
-div.onclick=()=>speak(w[0]);
-wbox.appendChild(div);
-});
-
-/////////////////////////////////////////////////////
-// 💬 日常口语短句
-/////////////////////////////////////////////////////
-const phrases=[
-"I want water",
-"I am hungry",
-"Where is the toilet?",
-"How much is it?",
-"I don't understand",
-"Can you help me?",
-"Nice to meet you",
-"See you later"
-];
-
-let pbox=document.getElementById("phrases");
-phrases.forEach(p=>{
-let div=document.createElement("div");
-div.className="item";
-div.innerText=p;
-div.onclick=()=>speak(p);
-pbox.appendChild(div);
-});
-
-/////////////////////////////////////////////////////
 // 🔊 语音
 /////////////////////////////////////////////////////
 function speak(t){
 let u=new SpeechSynthesisUtterance(t);
 u.lang="en-US";
-u.rate=0.9;
 speechSynthesis.cancel();
 speechSynthesis.speak(u);
 }
 
 /////////////////////////////////////////////////////
-// 🧠 练习题
+// 📚 高频词
 /////////////////////////////////////////////////////
-const base=[
+const words=[
+["hello","你好"],["want","想要"],["go","去"],
+["eat","吃"],["like","喜欢"],["water","水"]
+];
+
+let wb=document.getElementById("wordBox");
+words.forEach(w=>{
+let d=document.createElement("div");
+d.className="item";
+d.innerText=w[0]+" = "+w[1];
+d.onclick=()=>speak(w[0]);
+wb.appendChild(d);
+});
+
+/////////////////////////////////////////////////////
+// 💬 口语
+/////////////////////////////////////////////////////
+const phrases=[
+"I want water",
+"I like food",
+"Where is the toilet?",
+"Can you help me?"
+];
+
+let pb=document.getElementById("phraseBox");
+phrases.forEach(p=>{
+let d=document.createElement("div");
+d.className="item";
+d.innerText=p;
+d.onclick=()=>speak(p);
+pb.appendChild(d);
+});
+
+/////////////////////////////////////////////////////
+// 🧠 练习
+/////////////////////////////////////////////////////
+const quiz=[
 {q:"I ___ water",a:"want",opts:["want","go","eat"]},
-{q:"I ___ hungry",a:"am",opts:["am","is","are"]},
-{q:"Where ___ you go?",a:"do",opts:["do","does","did"]}
+{q:"I ___ hungry",a:"am",opts:["am","is","are"]}
 ];
 
 let wrongs=JSON.parse(localStorage.getItem("wrongs")||"[]");
 
-let quiz=[...base,...wrongs.slice(-5)];
-
-let qbox=document.getElementById("quiz");
-
-quiz.forEach(item=>{
+function renderQuiz(){
+let box=document.getElementById("quizBox");
+box.innerHTML="";
+quiz.concat(wrongs.slice(-5)).forEach(item=>{
 let div=document.createElement("div");
 div.innerHTML="<b>"+item.q+"</b>";
 
@@ -148,17 +185,19 @@ localStorage.setItem("wrongs",JSON.stringify(wrongs));
 renderWrong();
 }
 };
+
 div.appendChild(b);
 });
 
-qbox.appendChild(div);
+box.appendChild(div);
 });
+}
 
 /////////////////////////////////////////////////////
-// 🔁 错题本
+// 🔁 错题
 /////////////////////////////////////////////////////
 function renderWrong(){
-let box=document.getElementById("wrong");
+let box=document.getElementById("wrongBox");
 box.innerHTML="";
 wrongs.slice(-10).forEach(w=>{
 let d=document.createElement("div");
@@ -166,6 +205,18 @@ d.innerText="🔁 "+w.q;
 box.appendChild(d);
 });
 }
+
+/////////////////////////////////////////////////////
+// 📱 页面切换
+/////////////////////////////////////////////////////
+function show(id){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+
+if(id==="quiz") renderQuiz();
+if(id==="wrong") renderWrong();
+}
+
 renderWrong();
 
 </script>
