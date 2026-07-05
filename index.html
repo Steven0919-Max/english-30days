@@ -3,100 +3,144 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI英语学习 V7</title>
+
+<title>AI英语 V9</title>
+
+<!-- PWA核心 -->
+<link rel="manifest" href="manifest.json">
 
 <style>
-body{font-family:Arial;background:#f6f6f6;margin:0}
-h2{text-align:center}
-.card{background:#fff;margin:12px;padding:16px;border-radius:12px}
-.word{padding:12px;background:#eee;margin:6px 0;border-radius:10px;font-size:18px}
-.btn{width:92%;padding:16px;font-size:18px;margin:10px auto;display:block;background:#22c55e;color:#fff;border:none;border-radius:14px}
-.option{padding:12px;background:#eee;margin:8px;border-radius:10px}
-.bottom{position:fixed;bottom:0;width:100%;background:#fff;display:flex;justify-content:space-around;padding:10px;font-size:14px}
-.small{color:#666;font-size:13px;text-align:center}
+body{margin:0;font-family:Arial;background:#f6f7fb}
+.page{display:none;padding:12px}
+.active{display:block}
+
+header{
+text-align:center;
+padding:10px;
+font-size:18px;
+font-weight:bold;
+}
+
+.card{
+background:#fff;
+padding:14px;
+margin:10px 0;
+border-radius:14px;
+box-shadow:0 2px 10px rgba(0,0,0,0.06);
+}
+
+.btn{
+width:100%;
+padding:14px;
+background:#22c55e;
+color:#fff;
+border:none;
+border-radius:12px;
+font-size:16px;
+}
+
+.option{
+padding:12px;
+background:#eee;
+margin:8px 0;
+border-radius:10px;
+}
+
+.nav{
+position:fixed;
+bottom:0;
+width:100%;
+display:flex;
+background:#fff;
+border-top:1px solid #ddd;
+}
+
+.nav div{
+flex:1;
+text-align:center;
+padding:12px;
+font-size:14px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>📘 AI英语学习 V7（AI老师版）</h2>
+<header>📘 AI英语 V9（可安装App版）</header>
 
+<!-- HOME -->
+<div id="home" class="page active">
 <div class="card">
-<h3>📅 Day <span id="day"></span> ｜ 🔥 连续 <span id="streak">0</span> 天</h3>
+<h3>📅 今日任务</h3>
+<p id="today"></p>
+<button class="btn" onclick="go('lesson')">开始学习</button>
+</div>
 </div>
 
+<!-- LESSON -->
+<div id="lesson" class="page">
 <div class="card">
-<h3>📚 今日单词（点击发音）</h3>
+<h3>📚 单词</h3>
 <div id="words"></div>
 </div>
 
 <div class="card">
-<h3>💬 今日句子（AI生成）</h3>
+<h3>💬 句子</h3>
 <div id="sentences"></div>
 </div>
+</div>
 
+<!-- PRACTICE -->
+<div id="practice" class="page">
 <div class="card">
-<h3>🧠 练习（错题会重复）</h3>
-<p id="q"></p>
-<div id="options"></div>
+<h3 id="q"></h3>
+<div id="opts"></div>
 <p id="result"></p>
 </div>
 
-<button class="btn" onclick="nextQ()">下一题</button>
-
-<div class="card">
-<h3>🤖 AI英语老师</h3>
-<input id="ask" placeholder="输入：帮我练口语 / 造句" style="width:95%;padding:10px">
-<button class="btn" onclick="ai()">发送</button>
-<p id="ai"></p>
+<button class="btn" onclick="next()">下一题</button>
 </div>
 
-<div class="bottom">
-<div>🏠首页</div>
-<div>📘学习</div>
-<div>🧠练习</div>
+<!-- REVIEW -->
+<div id="review" class="page">
+<div class="card">
+<h3>🔁 错题本</h3>
+<div id="wrong"></div>
+</div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+<div onclick="go('home')">🏠</div>
+<div onclick="go('lesson')">📚</div>
+<div onclick="go('practice')">🧠</div>
+<div onclick="go('review')">🔁</div>
 </div>
 
 <script>
 
-// ===== 基础词库 =====
-const vocab = [
+// ===== 数据 =====
+let db = JSON.parse(localStorage.getItem("db")||"{}");
+if(!db.day){db.day=1;db.wrong=[];}
+
+const vocab=[
 ["like","喜欢"],["go","去"],["eat","吃"],["drink","喝"],["water","水"],
-["want","想要"],["need","需要"],["see","看见"],["have","有"],["play","玩"],
-["study","学习"],["read","读"],["write","写"],["run","跑"]
+["want","想要"],["need","需要"],["play","玩"],["see","看"]
 ];
 
-// ===== AI句型系统 =====
-function makeSentence(word){
-let templates = [
-"I like to {w}",
-"I want to {w}",
-"I need to {w}",
-"I can {w}",
-"I will {w} today"
-];
-let t = templates[Math.floor(Math.random()*templates.length)];
-return t.replace("{w}",word);
-}
-
-// ===== 稳定每日种子 =====
-function seed(){
-let d=new Date();
-return d.getFullYear()*100+(d.getMonth()+1)*10+d.getDate();
-}
-
-// ===== 今日数据 =====
+// ===== 固定生成 =====
 function today(){
-let s=seed();
+let s=db.day*11;
+
 let words=[];
 for(let i=0;i<5;i++){
 words.push(vocab[(s+i)%vocab.length]);
 }
 
-let sentences=[];
-for(let i=0;i<2;i++){
-sentences.push(makeSentence(words[i][0]));
-}
+let sentences=[
+"I like "+words[0][0],
+"I want "+words[1][0]
+];
 
 return {words,sentences};
 }
@@ -104,43 +148,30 @@ return {words,sentences};
 let data=today();
 
 // ===== 渲染 =====
-document.getElementById("day").innerText=new Date().getDate();
+document.getElementById("today").innerText=
+"Day "+db.day+" ｜ 5词 + 2句";
 
-let streak = localStorage.getItem("streak")||0;
-document.getElementById("streak").innerText=streak;
-
-// 单词
+// words
 document.getElementById("words").innerHTML=
-data.words.map(w=>`
-<div class='word' onclick='speak("${w[0]}")'>
-🔊 ${w[0]} = ${w[1]}
-</div>`).join("");
+data.words.map(w=>`<div class='option'>${w[0]} = ${w[1]}</div>`).join("");
 
-// 句子
+// sentences
 document.getElementById("sentences").innerHTML=
-data.sentences.map(s=>`<div class='word'>${s}</div>`).join("");
+data.sentences.map(s=>`<div class='option'>${s}</div>`).join("");
 
-// ===== 语音 =====
-function speak(text){
-let u=new SpeechSynthesisUtterance(text);
-u.lang="en-US";
-speechSynthesis.speak(u);
-}
-
-// ===== 练习系统 =====
+// ===== 练习 =====
 let i=0;
 
-function nextQ(){
+function show(){
 let w=data.words[i%5];
-let correct=w[1];
 
-let opts=shuffle([correct,"水","吃","玩"]);
+let opts=shuffle([w[1],"水","吃"]);
 
 document.getElementById("q").innerText="“"+w[0]+"”是什么意思？";
 
-document.getElementById("options").innerHTML=
+document.getElementById("opts").innerHTML=
 opts.map(o=>`
-<div class='option' onclick='check("${o}","${correct}")'>${o}</div>
+<div class='option' onclick='check("${o}","${w[1]}")'>${o}</div>
 `).join("");
 
 document.getElementById("result").innerText="";
@@ -149,39 +180,42 @@ document.getElementById("result").innerText="";
 function check(a,c){
 if(a===c){
 document.getElementById("result").innerText="✅ 正确";
-
-// 打卡
-let s=parseInt(localStorage.getItem("streak")||0);
-localStorage.setItem("streak",s+1);
-
 }else{
-document.getElementById("result").innerText="❌ 错误 → 正确："+c;
+document.getElementById("result").innerText="❌ 错误";
+db.wrong.push(a);
+localStorage.setItem("db",JSON.stringify(db));
 }
+}
+
+function next(){
+i++;
+if(i>=data.words.length){
+db.day++;
+localStorage.setItem("db",JSON.stringify(db));
+alert("完成今天！");
+location.reload();
+return;
+}
+show();
 }
 
 function shuffle(a){
 return a.sort(()=>Math.random()-0.5);
 }
 
-// ===== AI老师（简化版）=====
-function ai(){
-let v=document.getElementById("ask").value;
+show();
 
-let res="";
-if(v.includes("口语")){
-res="Let's practice: I want to go. / I like water. Try repeating!";
-}
-else if(v.includes("造句")){
-res="Try: I like " + data.words[0][0];
-}
-else{
-res="我可以帮你练口语、造句、背单词。";
-}
 
-document.getElementById("ai").innerText=res;
+// ===== 页面切换 =====
+function go(p){
+document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+document.getElementById(p).classList.add("active");
+if(p==="practice") show();
+if(p==="review"){
+document.getElementById("wrong").innerHTML=
+db.wrong.slice(-10).map(w=>`<div class='option'>${w}</div>`).join("");
 }
-
-nextQ();
+}
 
 </script>
 
